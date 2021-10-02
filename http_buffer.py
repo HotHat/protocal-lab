@@ -6,6 +6,12 @@ class HttpBuffer:
         self.end = len(self.buffer) - 1
         self.position = 0
 
+    def is_empty(self):
+        return self.start == self.end
+
+    def is_end(self):
+        return self.position == self.end
+
     def append(self, x):
         self.buffer.extend(x)
         self.end = len(self.buffer)
