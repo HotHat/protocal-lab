@@ -1,5 +1,5 @@
 import unittest
-from http_parser import *
+from http.http_parser import *
 
 
 class TestHttp(unittest.TestCase):

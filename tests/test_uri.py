@@ -1,5 +1,5 @@
 import unittest
-from http_uri import *
+from http.http_uri import *
 
 
 class TestUri(unittest.TestCase):
