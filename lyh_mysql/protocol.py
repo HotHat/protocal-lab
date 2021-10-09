@@ -1,5 +1,7 @@
 
 # a transaction is active
+import enum
+
 SERVER_STATUS_IN_TRANS = 0x0001
 # auto-commit is enabled
 SERVER_STATUS_AUTOCOMMIT = 0x0002
@@ -46,9 +48,49 @@ CLIENT_SESSION_TRACK = 0x00800000
 CLIENT_DEPRECATE_EOF = 0x01000000
 
 
+def is_status_flag(v, f):
+    return v & f
+
+
 def set_capability_flag(v, f):
     return v | f
 
 
 def is_capability_flag(v, f):
     return v & f
+
+
+def int_length_encoded(buf):
+    pre = buf[0]
+    if pre < 251:
+        return pre, 1
+    elif pre == 0xfc:
+        return (buf[2] << 8 | buf[1]), 3
+    elif pre == 0xfd:
+        return (buf[3] << 16 | buf[2] << 8 | buf[1]), 4
+    elif pre == 0xfe:
+        # Note: Up to MySQL 3.22, 0xfe was followed by a 4-byte integer
+        return (buf[8] << 56 | buf[7] << 48 | buf[6] << 40 | buf[5] << 32 |
+                buf[4] << 24 | buf[3] << 16 | buf[2] << 8 | buf[1]), 9
+
+
+def string_length_encoded(buf):
+    num, byt_num = int_length_encoded(buf)
+    return buf[byt_num:num], byt_num + num
+
+
+class QueryState(enum.Enum):
+    get_more_data = 1
+    send_more_data = 2
+    handshake = 11
+    auth = 12
+    command_query = 13
+    field_count = 14
+    field_loop = 15
+    field_eof = 16
+    rows = 17
+    eof = 100
+    error = 101
+    ok = 102
+
+
