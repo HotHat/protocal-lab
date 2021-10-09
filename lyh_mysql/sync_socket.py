@@ -49,19 +49,21 @@ class SyncSocket:
             # print(tmp.id)
             # print(tmp.size)
             # print(tmp.data)
-            self.socket.send(tmp.build())
+            self.socket.send(tmp.payload())
             i += 1
             sid += 1
 
         al = m * mod
         if al == packet.size:
             # print('0: ', b'\00\00\00' + pack('<B', cid))
-            self.socket.send(Packet(0, 0).build())
+            self.socket.send(Packet(0, 0).payload())
         else:
             # print('1: ', p + pack('<B', cid) + packet.data[al:packet.size])
-            self.socket.send(Packet(packet.size - al, sid, packet.data[al:packet.size]).build())
+            self.socket.send(Packet(packet.size - al, sid, packet.data[al:packet.size]).payload())
 
     def close(self):
         self.socket.close()
 
+    def read_query(self):
+        pass
 

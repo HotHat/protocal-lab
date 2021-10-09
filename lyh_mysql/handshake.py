@@ -172,7 +172,7 @@ class HandshakeV9:
 
 class HandshakeResponse41:
     def __init__(self):
-        self.capability_flags = 0x00000000
+        self.capability_flags = CLIENT_CAPABILITIES
         self.max_packet_size = 0x40000000
         self.character_set = 33
         self.reserved = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -182,10 +182,10 @@ class HandshakeResponse41:
         self.auth_plugin_name = ''
         self.attrs = []
 
-    def set_capability_flags(self):
+    # def set_capability_flags(self):
         # from navicat
-        self.capability_flags = 0x00EFA685
-        return self
+        # self.capability_flags = 0x00EFA685
+        # return self
 
     def set_username(self, name):
         self.username = name
@@ -207,7 +207,7 @@ class HandshakeResponse41:
         self.attrs[key] = value
         return self
 
-    def build(self):
+    def payload(self):
         byt = bytearray()
         byt.extend(pack('<I', self.capability_flags))
         byt.extend((pack('<I', self.max_packet_size)))

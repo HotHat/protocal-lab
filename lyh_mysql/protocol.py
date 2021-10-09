@@ -1,6 +1,7 @@
 
 # a transaction is active
 import enum
+from struct import pack
 
 SERVER_STATUS_IN_TRANS = 0x0001
 # auto-commit is enabled
@@ -47,6 +48,8 @@ CLIENT_CAN_HANDLE_EXPIRED_PASSWORDS = 0x00400000
 CLIENT_SESSION_TRACK = 0x00800000
 CLIENT_DEPRECATE_EOF = 0x01000000
 
+CLIENT_CAPABILITIES = 0x00EFA685
+
 
 def is_status_flag(v, f):
     return v & f
@@ -60,23 +63,33 @@ def is_capability_flag(v, f):
     return v & f
 
 
-def int_length_encoded(buf):
-    pre = buf[0]
+def int_fixed_length(buf, size, start=0):
+    assert(len(buf) - start >= size)
+    result = 0
+    for i in range(size):
+        result |= buf[i+start] << 8 * i
+    return result
+
+
+def int_length_encoded(buf, start=0):
+    assert(len(buf)-start > 0)
+    pre = buf[start]
     if pre < 251:
         return pre, 1
     elif pre == 0xfc:
-        return (buf[2] << 8 | buf[1]), 3
+        return int_fixed_length(buf, 2, start), 3
     elif pre == 0xfd:
-        return (buf[3] << 16 | buf[2] << 8 | buf[1]), 4
+        return int_fixed_length(buf, 3, start), 4
     elif pre == 0xfe:
         # Note: Up to MySQL 3.22, 0xfe was followed by a 4-byte integer
-        return (buf[8] << 56 | buf[7] << 48 | buf[6] << 40 | buf[5] << 32 |
-                buf[4] << 24 | buf[3] << 16 | buf[2] << 8 | buf[1]), 9
+        return int_fixed_length(buf, 8, start), 9
 
 
-def string_length_encoded(buf):
-    num, byt_num = int_length_encoded(buf)
-    return buf[byt_num:num], byt_num + num
+def string_length_encoded(buf, start=0):
+    num, byt_num = int_length_encoded(buf, start)
+    low = byt_num+start
+    high = low + num
+    return buf[low: high], byt_num + num
 
 
 class QueryState(enum.Enum):
@@ -94,3 +107,39 @@ class QueryState(enum.Enum):
     ok = 102
 
 
+# text protocol
+
+class ComInitDB:
+    def __init__(self, schema_name):
+        self.command = 0x02
+        self.schema_name = schema_name
+
+    def payload(self):
+        return pack('<B', self.command) + bytes(self.schema_name, 'utf8')
+
+
+class ComQuery:
+    def __init__(self, query_text):
+        self.command = 0x03
+        self.query = query_text
+
+    def payload(self):
+        return pack('<B', self.command) + bytes(self.query, 'utf8')
+
+
+class ComCreateDB:
+    def __init__(self, schema_name):
+        self.command = 0x05
+        self.schema_name = schema_name
+
+    def payload(self):
+        return pack('<B', self.command) + bytes(self.schema_name, 'utf8')
+
+
+class ComDropDB:
+    def __init__(self, schema_name):
+        self.command = 0x06
+        self.schema_name = schema_name
+
+    def payload(self):
+        return pack('<B', self.command) + bytes(self.schema_name, 'utf8')
