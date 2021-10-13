@@ -58,6 +58,8 @@ class DnsPacket:
 
     def add_query(self, domain, q_type, q_class):
         self.query.append((domain, q_type, q_class))
+        if len(self.query) > 1:
+            raise Exception('not support query more than one')
 
     def set_query(self):
         self.option >>= 1
@@ -65,14 +67,14 @@ class DnsPacket:
     def set_response(self):
         self.option |= 1 << 15
 
-    def set_opcode_standard_query(self):
+    def set_standard_query(self):
         self.option &= ~(0x0f << 11)
 
-    def set_opcode_invert_query(self):
+    def set_invert_query(self):
         self.option &= ~(0x0f << 11)
         self.option |= 1 << 11
 
-    def set_opcode_status(self):
+    def set_status_query(self):
         self.option &= ~(0x0f << 11)
         self.option |= 1 << 12
 
@@ -145,18 +147,18 @@ class DnsPacket:
         data = b''
         data += pack('>H', self.id)
         data += pack('>H', self.option)
-        data += pack('>H', 1)
+        data += pack('>H', len(self.query))
         data += pack('>H', 0)
         data += pack('>H', 0)
         data += pack('>H', 0)
-        im = self.query.split('.')
-        for i in im:
-            data += pack('>B', len(i)) + i.encode()
-
-        data += b'\00'
-        # QTYPE
-        data += pack('>H', 1)
-        # QCLASS
-        data += pack('>H', 1)
+        for i in self.query:
+            im = i[0].split('.')
+            for j in im:
+                data += pack('>B', len(j)) + j.encode()
+            data += b'\00'
+            # QTYPE
+            data += pack('>H', i[1].value)
+            # QCLASS
+            data += pack('>H', i[2].value)
 
         return data

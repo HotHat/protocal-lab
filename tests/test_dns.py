@@ -9,9 +9,14 @@ class TestDns(unittest.TestCase):
         # little endian
         # data = b'\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x00\x05baidu\x03com\x00\x01\x00\x01\x00'
         # big endian
-        data = b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05baidu\x03com\x00\x00\x01\x00\x01'
+        # data = b'\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x05baidu\x03com\x00\x00\x01\x00\x01'
         #esp = b'\x00\x00\x80\x80\x00\x01\x00\x02\x00\x00\x00\x00\x05baidu\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x01c\x00\x04\xdc\xb5&\x94\xc0\x0c\x00\x01\x00\x01\x00\x00\x01c\x00\x04\xdc\xb5&\xfb'
-
+        packet = DnsPacket()
+        packet.add_query('baidu.com', DnsQType.A, DnsQClassValue.IN)
+        # packet.add_query('baidu.com', DnsQType.A, DnsQClassValue.IN)
+        # packet.set_rd()
+        data = packet.payload()
+        print(data)
         sock.sendto(data, ('114.114.114.114', 53))
         resp, address = sock.recvfrom(1024)
         print(resp)
@@ -24,8 +29,9 @@ class TestDns(unittest.TestCase):
 
     def test_packet(self):
         packet = DnsPacket()
-        packet.add_query('google.com', DnsQType.A, DnsQClassValue.IN)
-
+        packet.add_query('baidu.com', DnsQType.A, DnsQClassValue.IN)
+        # packet.add_query('sina.com', DnsQType.A, DnsQClassValue.IN)
+        packet.set_rd()
         print(packet.payload())
 
     def test_ip(self):
@@ -40,11 +46,11 @@ class TestDns(unittest.TestCase):
         packet.set_response()
         print(bin(packet.option))
         print(packet.option)
-        packet.set_opcode_standard_query()
+        packet.set_standard_query()
         print(bin(packet.option))
-        packet.set_opcode_invert_query()
+        packet.set_invert_query()
         print(bin(packet.option))
-        packet.set_opcode_status()
+        packet.set_status_query()
         print(bin(packet.option))
         # ra
         packet.set_ra()
