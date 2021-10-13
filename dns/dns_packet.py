@@ -42,14 +42,15 @@ class DnsQClassValue(DnsClassValue, enum.Enum):
 
 
 class DnsPacket:
+    """
+    rfc: https://datatracker.ietf.org/doc/html/rfc1035
+    """
     def __init__(self):
         self.id = 0
         self.option = 0x0000
         self.query = []
         self.question = []
         self.answer = []
-        self.authority = []
-        self.addition = []
         self.query_count = 0
         self.answer_count = 0
         self.authority_count = 0
@@ -131,7 +132,7 @@ class DnsPacket:
             rr_class = scanner.next_int(2)
             self.question.append((name, rr_type, rr_class))
 
-        for i in range(self.answer_count):
+        for i in range(self.answer_count + self.authority_count + self.addition_count):
             name = scanner.next_name()
             rr_type = scanner.next_int(2)
             rr_class = scanner.next_int(2)

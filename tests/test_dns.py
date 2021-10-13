@@ -16,6 +16,11 @@ class TestDns(unittest.TestCase):
         resp, address = sock.recvfrom(1024)
         print(resp)
         print(address)
+        packet = DnsPacket()
+        packet.parse(resp)
+        print(packet.answer)
+        print(socket.inet_ntoa(packet.answer[0][4]))
+        sock.close()
 
     def test_packet(self):
         packet = DnsPacket()
@@ -70,7 +75,7 @@ class TestDns(unittest.TestCase):
         print(packet.question)
         # print(socket.inet_ntoa(packet.query[0][4]))
         print(packet.answer)
-        print(socket.inet_ntoa(packet.answer[0][4]))
+        print(socket.inet_ntoa(packet.answer[1][4]))
 
 
 
